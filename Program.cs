@@ -5,11 +5,11 @@ internal class Program
 {
     private static void Main(string[] args)
     {
-        Stopwatch stopwatch = new Stopwatch();
+        var stopwatch = new Stopwatch();
 
         //Чтение 3х файлов в раздельных задачах
         stopwatch.Start();
-        Task<int> task1 =  Task.Run(() =>
+        Task<int> task1 = Task.Run(() =>
         {
             int count = SpaceFinder.FindSpacesInFile(@"d:\Projects\OTUS\DZ6\TestFiles\File1.ini");
             return count;
@@ -25,7 +25,10 @@ internal class Program
             return count;
         });
 
-        while (!(task1.IsCompleted && task2.IsCompleted && task3.IsCompleted)) { }  //ожидание завершения всех задач
+        //while (!(task1.IsCompleted && task2.IsCompleted && task3.IsCompleted)) { }  //ожидание завершения всех задач
+        var results1 = Task.WhenAll(task1, task2, task3);
+
+        while (!results1.IsCompleted) { }
 
         stopwatch.Stop();
         Console.WriteLine($"Spaces in file1 = {task1.Result}");
@@ -35,21 +38,19 @@ internal class Program
         Console.WriteLine();
 
         //чтение каталога
-        SpaceFinder spaceFinder = new SpaceFinder();
-        spaceFinder.FileResult += DisplaySpaces;    //подписка на событие после выполнения каждой задачи
-
         stopwatch.Restart();
         stopwatch.Start();
-        spaceFinder.FindInPath(@"d:\Projects\OTUS\DZ6\TestCatalog\");
 
-        while (!spaceFinder.isComplete()) { }   //ожидание выполнения всех задач 
+        var tasks = Finder.FindInPath(@"d:\Projects\OTUS\DZ6\TestCatalog\", SpaceFinder.FindSpacesInFile);  //передача делегата который возвращает FileInfoSize
+        var results = Task.WhenAll(tasks);
+
+        while (!results.IsCompleted) { }    //ожидание завершения тасок
 
         stopwatch.Stop();
-        Console.WriteLine($"Path time={stopwatch.ElapsedMilliseconds}");
-    }
 
-    private static void DisplaySpaces(string message)
-    {
-        Console.WriteLine(message);
+        foreach (var result in results.Result)
+            Console.WriteLine($"File:{result.Name} size={result.Size}");
+
+        Console.WriteLine($"Path time={stopwatch.ElapsedMilliseconds}");
     }
 }
