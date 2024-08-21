@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 internal class Program
 {
-    private static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var stopwatch = new Stopwatch();
 
@@ -25,12 +25,10 @@ internal class Program
             return count;
         });
 
-        //while (!(task1.IsCompleted && task2.IsCompleted && task3.IsCompleted)) { }  //ожидание завершения всех задач
-        var results1 = Task.WhenAll(task1, task2, task3);
-
-        while (!results1.IsCompleted) { }
+        await Task.WhenAll(task1, task2, task3);
 
         stopwatch.Stop();
+
         Console.WriteLine($"Spaces in file1 = {task1.Result}");
         Console.WriteLine($"Spaces in file2 = {task2.Result}");
         Console.WriteLine($"Spaces in file3 = {task3.Result}");
@@ -42,13 +40,11 @@ internal class Program
         stopwatch.Start();
 
         var tasks = Finder.FindInPath(@"d:\Projects\OTUS\DZ6\TestCatalog\", SpaceFinder.FindSpacesInFile);  //передача делегата который возвращает FileInfoSize
-        var results = Task.WhenAll(tasks);
-
-        while (!results.IsCompleted) { }    //ожидание завершения тасок
+        FileInfoSize[] results = await Task.WhenAll(tasks);
 
         stopwatch.Stop();
 
-        foreach (var result in results.Result)
+        foreach (var result in results)
             Console.WriteLine($"File:{result.Name} size={result.Size}");
 
         Console.WriteLine($"Path time={stopwatch.ElapsedMilliseconds}");
